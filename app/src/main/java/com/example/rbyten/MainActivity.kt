@@ -3,10 +3,14 @@ package com.example.rbyten
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
+import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -18,9 +22,34 @@ class MainActivity : ComponentActivity() {
         setContent {
             RbytenTheme {
                 // A surface container using the 'background' color from the theme
-                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colors.background) {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colors.background
+                ) {
                     Greeting("Android")
                 }
+
+                Scaffold(
+                    floatingActionButton = {
+                        FloatingActionButton(
+                            content = {
+                            },
+                            onClick = { /*TODO*/ }
+                        )
+                    },
+                    bottomBar = {
+                        BottomAppBar() {
+                            IconButton(onClick = { /*TODO*/ }) {
+                                Icon(Icons.Filled.Menu, contentDescription = "Доски")
+                            }
+                            Spacer(Modifier.weight(1f, true))
+                            IconButton(onClick = { /*TODO*/ }) {
+                                Icon(Icons.Filled.Settings, contentDescription = "Настройки")
+                            }
+                        }
+
+                    }
+
             }
         }
     }
@@ -30,6 +59,7 @@ class MainActivity : ComponentActivity() {
 fun Greeting(name: String) {
     Text(text = "Hello $name!")
 }
+
 
 @Preview(showBackground = true)
 @Composable
