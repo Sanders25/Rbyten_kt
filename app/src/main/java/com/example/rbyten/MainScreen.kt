@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -12,6 +13,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -24,11 +26,13 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun MainScreen(@PreviewParameter(NameProvider::class) login: String?) {
 
+    val fabShape = CircleShape
     var addCard by remember{ mutableStateOf(false)}
 
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
+                shape = fabShape,
                 content = {
                     Icon(Icons.Rounded.Add, "Добавить", Modifier.size(50.dp))
                 },
@@ -41,7 +45,9 @@ fun MainScreen(@PreviewParameter(NameProvider::class) login: String?) {
         isFloatingActionButtonDocked = true,
 
         bottomBar = {
-            BottomAppBar {
+            BottomAppBar(
+                cutoutShape = fabShape
+            ) {
                 IconButton(onClick = { /*TODO*/ }) {
                     Icon(Icons.Filled.Menu, contentDescription = "Доски")
                 }
