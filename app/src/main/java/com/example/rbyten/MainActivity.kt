@@ -29,7 +29,8 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colors.background
                 )
                 {
-                    Navigation()
+                    //Navigation()
+                    MainScreen()
                 }
             }
         }
@@ -38,6 +39,6 @@ class MainActivity : ComponentActivity() {
 
 class NameProvider : PreviewParameterProvider<String> {
     override val values: Sequence<String> = sequenceOf(
-        "Апробация"
+        "text"
     )
 }
