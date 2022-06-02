@@ -1,7 +1,8 @@
 package com.example.rbyten.navigation
 
-sealed class Screen(val route: String) {
-    object MainScreen : Screen("main_screen")
-    object SettingsScreen : Screen("settings_screen")
+object Routes {
+    const val MAIN_SCREEN = "main"
+    const val SETTINGS_SCREEN = "settings"
+    const val EDITOR_SCREEN = "editor"
 }
 

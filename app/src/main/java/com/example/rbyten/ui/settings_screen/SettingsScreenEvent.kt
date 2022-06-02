@@ -1,4 +1,5 @@
 package com.example.rbyten.ui.settings_screen
 
-class SettingsScreenEvent {
+sealed class SettingsScreenEvent {
+        object OnNavigationClick: SettingsScreenEvent()
 }

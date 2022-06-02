@@ -1,6 +1,7 @@
 package com.example.rbyten.ui.theme
 
 import androidx.compose.material.Typography
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -40,7 +41,7 @@ val Typography = Typography(
     button = TextStyle(
         fontFamily = MontserratAlternates,
         fontWeight = FontWeight.SemiBold,
-        color = CarbonForegroundColor,
+        color = AzureTheme.TextDarkColor,
         fontSize = 8.sp
     ),
 
@@ -53,13 +54,76 @@ val Typography = Typography(
         fontFamily = MontserratAlternates,
         fontWeight = FontWeight.Medium,
         fontSize = 20.sp
+    ),
+    h4 = TextStyle(
+        fontFamily = MontserratAlternates,
+        fontWeight = FontWeight.Light,
+        fontSize = 10.sp,
+        color = MintTheme.TextNeutralColor
     )
-/* Other default text styles to override
-button = TextStyle(
-fontFamily = FontFamily.Default,
-fontWeight = FontWeight.W500,
-fontSize = 14.sp
-),
-
-*/
 )
+
+val appTheme = AzureTheme
+
+val Typography.cardHeader: TextStyle
+    @Composable
+    get() {
+        return TextStyle(
+            fontFamily = MontserratAlternates,
+            fontWeight = FontWeight.Light,
+            fontSize = 20.sp,
+            color = appTheme.TextDarkColor,
+        )
+    }
+val Typography.smallText: TextStyle
+    @Composable
+    get() {
+        return TextStyle(
+            fontFamily = MontserratAlternates,
+            fontWeight = FontWeight.Light,
+            fontSize = 16.sp,
+            color = appTheme.TextDarkColor,
+        )
+    }
+
+val Typography.smallAccentText: TextStyle
+    @Composable
+    get() {
+        return TextStyle(
+            fontFamily = MontserratAlternates,
+            fontWeight = FontWeight.Medium,
+            fontSize = 16.sp,
+            color = appTheme.TextDarkColor
+        )
+    }
+val Typography.mediumText: TextStyle
+    @Composable
+    get() {
+        return TextStyle(
+            fontFamily = MontserratAlternates,
+            fontWeight = FontWeight.Light,
+            fontSize = 18.sp,
+            color = appTheme.TextDarkColor,
+        )
+    }
+val Typography.screenHeader: TextStyle
+    @Composable
+    get() {
+        return TextStyle(
+            fontFamily = MontserratAlternates,
+            fontWeight = FontWeight.Medium,
+            fontSize = 20.sp,
+            color = appTheme.TextDarkColor
+        )
+    }
+val Typography.largeItalicText: TextStyle
+    @Composable
+    get() {
+        return TextStyle(
+            fontFamily = MontserratAlternates,
+            fontWeight = FontWeight.Light,
+            fontStyle = FontStyle.Italic,
+            fontSize = 26.sp,
+            color = appTheme.TextDarkColor
+        )
+    }

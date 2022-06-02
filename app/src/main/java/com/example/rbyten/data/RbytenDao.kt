@@ -6,7 +6,8 @@ import com.example.rbyten.data.entities.Task
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface BlueprintDao {
+interface RbytenDao {
+    // region Blueprint
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertBlueprint(blueprint: Blueprint)
     @Delete
@@ -18,14 +19,22 @@ interface BlueprintDao {
     fun getFavouriteBlueprints(): Flow<List<Blueprint>>
     @Query("SELECT * FROM blueprint")
     fun getBlueprints(): Flow<List<Blueprint>>
+    @Query("SELECT * FROM blueprint")
+    fun getBlueprintsList(): List<Blueprint>
+    // endregion
 
+    // region Task
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTask(task: Task)
-    @Delete
-    suspend fun deleteTask(task: Task)
+    @Query("DELETE FROM task WHERE id = :id AND blueprintId = :blueprintId")
+    suspend fun deleteTask(id: Int, blueprintId: Int)
 
-    @Query("SELECT * FROM task WHERE id = :id")
-    suspend fun getTaskById(id: Int): Task?
+    @Query("SELECT * FROM task WHERE id = :id AND blueprintId = :blueprintId")
+    suspend fun getTaskById(id: Int, blueprintId: Int): Task?
     @Query("SELECT * FROM task")
-    fun getTasks(): Flow<List<Task>>
+    fun getAllTasks(): Flow<List<Task>>
+    @Query("SELECT * FROM task WHERE blueprintId = :id")
+    suspend fun getTasksInBlueprint(id: Int): List<Task>
+    // endregion
+
 }

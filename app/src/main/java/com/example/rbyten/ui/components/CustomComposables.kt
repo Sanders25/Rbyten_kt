@@ -1,14 +1,19 @@
-package com.example.rbyten.ui
+package com.example.rbyten.ui.components
 
 import android.view.animation.OvershootInterpolator
 import androidx.compose.animation.animateColor
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.selection.LocalTextSelectionColors
+import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -26,12 +31,16 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.rbyten.R
 import com.example.rbyten.ui.main_screen.MainScreenEvent
 import com.example.rbyten.ui.main_screen.SettingsRow
 import com.example.rbyten.ui.theme.*
@@ -42,7 +51,7 @@ enum class FabState {
 }
 
 @Composable
-fun CustomFloatingActionButton(state: Boolean, onClick: () -> Unit) {
+fun CustomFloatingActionButton(state: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
 
     val fabShape = CutCornerShape(50)
 
@@ -103,7 +112,7 @@ fun CustomFloatingActionButton(state: Boolean, onClick: () -> Unit) {
 
     FloatingActionButton(
         shape = fabShape,
-        modifier = Modifier
+        modifier = modifier
             .size(fabSizeAnim)
             .graphicsLayer { rotationZ = fabRotationAnim },
         elevation = FloatingActionButtonDefaults.elevation(3.dp),
@@ -130,11 +139,15 @@ fun CustomFloatingActionButton(state: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-fun CustomBottomAppBar(onClickHome: () -> Unit, onClickSettings: () -> Unit) {
-        BottomAppBar(
+fun CustomBottomAppBar(
+    onClickHome: () -> Unit,
+    onClickSettings: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    BottomAppBar(
         backgroundColor = ExtendedTheme.colors.surfaceLight,
         elevation = 10.dp,
-        modifier = Modifier
+        modifier = modifier
             .height(50.dp)
     ) {
         Box(
@@ -199,5 +212,96 @@ fun CustomBottomAppBar(onClickHome: () -> Unit, onClickSettings: () -> Unit) {
                 }
             }
         }
+    }
+}
+
+@Composable
+fun CustomCircleButton(
+    onClick: () -> Unit,
+    backgroundColor: Color = ExtendedTheme.colors.accent,
+    tint: Color = ExtendedTheme.colors.textLight,
+    size: Dp = 35.dp,
+    modifier: Modifier = Modifier,
+    icon: ImageVector,
+) {
+    Surface(
+        color = backgroundColor,
+        shape = CircleShape,
+        modifier = modifier.requiredSize(size)
+    ) {
+        Icon(icon, modifier = Modifier
+            .padding(if (size > 30.dp) 6.dp else 0.dp)
+            .clickable(onClick = onClick, indication = null,
+                interactionSource = remember { MutableInteractionSource() })
+            .size(size),
+            tint = tint,
+            contentDescription = null)
+    }
+}
+
+@Composable
+fun CustomCircleButton(
+    onClick: () -> Unit,
+    backgroundColor: Color = ExtendedTheme.colors.accent,
+    tint: Color = ExtendedTheme.colors.textLight,
+    size: Dp = 35.dp,
+    modifier: Modifier = Modifier,
+    icon: Int,
+) {
+    Surface(
+        color = backgroundColor,
+        shape = CircleShape,
+        modifier = modifier.size(size)
+    ) {
+        Icon(painterResource(icon), modifier = Modifier
+            .padding(if (size > 30.dp) 6.dp else 0.dp)
+            .clickable(onClick = onClick, indication = null,
+                interactionSource = remember { MutableInteractionSource() })
+            .fillMaxSize(),
+            tint = tint,
+            contentDescription = null)
+    }
+}
+
+@Composable
+fun CustomTextField(
+    value: String,
+    backgroundColor: Color = ExtendedTheme.colors.accentLight,
+    modifier: Modifier = Modifier,
+    onValueChange: (String) -> Unit,
+    onButtonClick: () -> Unit,
+) {
+    val focusManager = LocalFocusManager.current
+
+    val customTextSelectionColors = TextSelectionColors(
+        handleColor = ExtendedTheme.colors.textLight,
+        backgroundColor = ExtendedTheme.colors.textLight.copy(alpha = 0.4f)
+    )
+    CompositionLocalProvider(LocalTextSelectionColors provides customTextSelectionColors) {
+        TextField(
+            value = value,
+            label = null,
+            onValueChange = onValueChange,
+            textStyle = MaterialTheme.typography.smallAccentText,
+            shape = RoundedCornerShape(16.dp),
+            colors = TextFieldDefaults.textFieldColors(
+                backgroundColor = backgroundColor,
+                textColor = ExtendedTheme.colors.textColored,
+                cursorColor = ExtendedTheme.colors.textColored,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+                ),
+            trailingIcon = {
+                IconButton(onClick = onButtonClick) {
+                    Icon(
+                        Icons.Rounded.Close,
+                        contentDescription = null
+                    )
+                }
+            },
+            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+            keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+            modifier = modifier
+        )
     }
 }

@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 4,
-    "identityHash": "c6c41f126de7c22f884415181a3f3ce0",
+    "identityHash": "883b072f32193b16b176d2d1b53c251e",
     "entities": [
       {
         "tableName": "Blueprint",
@@ -50,13 +50,13 @@
       },
       {
         "tableName": "Task",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `blueprintId` INTEGER NOT NULL DEFAULT -1, `title` TEXT NOT NULL, `content` TEXT NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `blueprintId` INTEGER NOT NULL DEFAULT -1, `title` TEXT NOT NULL, `content` TEXT NOT NULL, PRIMARY KEY(`id`, `blueprintId`))",
         "fields": [
           {
             "fieldPath": "id",
             "columnName": "id",
             "affinity": "INTEGER",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "blueprintId",
@@ -80,9 +80,10 @@
         ],
         "primaryKey": {
           "columnNames": [
-            "id"
+            "id",
+            "blueprintId"
           ],
-          "autoGenerate": true
+          "autoGenerate": false
         },
         "indices": [],
         "foreignKeys": []
@@ -91,7 +92,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c6c41f126de7c22f884415181a3f3ce0')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '883b072f32193b16b176d2d1b53c251e')"
     ]
   }
 }
