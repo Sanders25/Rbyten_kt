@@ -61,6 +61,7 @@ class EditorScreenViewModel @Inject constructor(
 
     class Task(_title: String) {
         var id = count.incrementAndGet()
+        var parentId: Int = -1
         var title: String = _title
         var content: MutableList<Widget<Any>> = mutableStateListOf()
         var isMenuOpen: Boolean = false
@@ -78,7 +79,6 @@ class EditorScreenViewModel @Inject constructor(
     data class TextFieldWidget(var text: String)
     data class ListWidget(val itemList: MutableList<ListWidgetItem> = mutableStateListOf())
     data class ListWidgetItem(var isChecked: Boolean, var text: String)
-    data class ImageWidget(val image: Bitmap?)
 
 
     private val _uiEvent = Channel<UiEvent>()
@@ -193,6 +193,22 @@ class EditorScreenViewModel @Inject constructor(
                     repository.deleteTask(event.task.id, blueprint?.id!!)
                 }
             }
+            is EditorScreenEvent.OnAddTaskParallelClick -> {
+                viewModelScope.launch {
+                    val newTask = Task(event.parallelTask.title + " (подзадача)")
+                    newTask.parentId = event.parallelTask.parentId
+                    cachedTasks.add(newTask)
+                    writeToDatabase(newTask)
+                }
+            }
+            is EditorScreenEvent.OnAddTaskSerialClick -> {
+                viewModelScope.launch {
+                    val newTask = Task(event.parentTask.title + " (подзадача)")
+                    newTask.parentId = event.parentTask.id
+                    cachedTasks.add(newTask)
+                    writeToDatabase(newTask)
+                }
+            }
         }
     }
 
@@ -209,6 +225,7 @@ class EditorScreenViewModel @Inject constructor(
             blueprintId = blueprint!!.id!!,
             title = _task.title,
             id = _task.id,
+            parentId = _task.parentId,
             content = jsonifyTask(_task)
         )
 
@@ -235,8 +252,9 @@ class EditorScreenViewModel @Inject constructor(
     private suspend fun loadTasksFromDatabase() {
         viewModelScope.launch {
             repository.getTasksInBlueprint(blueprint?.id!!).forEach { task ->
-                val _task: Task = Task(task.title)
-                _task.id = task.id!!
+                val _task = Task(task.title)
+                _task.id = task.id
+                _task.parentId = task.parentId
 
                 val loadedWidgets = jsonToTask(task.content)
 

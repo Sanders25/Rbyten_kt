@@ -18,6 +18,8 @@ import com.example.rbyten.ui.theme.Intro
 import com.example.rbyten.ui.theme.MintTheme
 import com.example.rbyten.util.UiEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
@@ -44,21 +46,47 @@ class MainScreenViewModel @Inject constructor(
     private val _uiEvent = Channel<UiEvent>()
     val uiEvent = _uiEvent.receiveAsFlow()
 
-/*    inner class LastEditedBlueprint(_blueprint: Blueprint) {
-        val blueprint = _blueprint
-        var tasksCount = 0
-        val tasksCompleted = 0
-        val deadline = ""
+    private var deletedBlueprint: Blueprint? = null
+    private var deletedBlueprintTasks: List<Task> = listOf()
+
+    private val TAG = "MYTAG"
+
+    inner class LastEditedBlueprint() {
+        lateinit var lastEditedBlueprint: Blueprint
+        var tasksCount: Int? = null
+        var tasksCompleted = 0
+        var deadline = ""
 
         init {
-            suspend {
-                val tasksInBlueprint = repository.getTasksInBlueprint(_blueprint.id!!)
-                tasksCount = tasksInBlueprint.count()
+            viewModelScope.launch(Dispatchers.IO) {
+                val blueprintsJob = async {
+                    repository.getBlueprintsList()
+                }
+                var blueprints = blueprintsJob.await()
+
+                Log.d(TAG, "unsorted bp's: $blueprints")
+
+                blueprints =
+                    blueprints.sortedBy { blueprint -> LocalDateTime.parse(blueprint.lastEdited) }
+
+                Log.d(TAG, "sorted bp's: $blueprints")
+
+                lastEditedBlueprint = blueprints.last()
+
+                val tasksJob = async {
+                    repository.getTasksInBlueprint(lastEditedBlueprint.id!!)
+                }
+
+                val tasks = tasksJob.await()
+
+                tasksCount = tasks.size
+
+                Log.d(TAG, "tasks count: $tasksCount")
             }
         }
-    }*/
+    }
 
-    inner class LastEditedBlueprintsList(_blueprintList: MutableList<Blueprint>) {
+/*    inner class LastEditedBlueprintsList(_blueprintList: MutableList<Blueprint>) {
         val blueprintList = _blueprintList
         lateinit var blueprint: Blueprint
         var tasksCount = 0
@@ -67,13 +95,12 @@ class MainScreenViewModel @Inject constructor(
 
         init {
             suspend {
-                delay(500)
                 blueprintList.sortedBy { blueprint -> LocalDateTime.parse(blueprint.lastEdited) }
                 blueprint = blueprintList.last()
                 //tasksCount = repository.getTasksInBlueprint(blueprint.id!!).count()
             }
         }
-    }
+    }*/
 
 /*    init {
         val tasksInBlueprint = getTasksInBp(_blueprint.id!!)
@@ -91,37 +118,25 @@ private fun getTasksInBp(id: Int): List<Task> {
     return output
 }*/
 
-
-    private var blueprintsList = mutableListOf<Blueprint>()
-
-    //: Blueprint? = null
-    private var deletedBlueprint: Blueprint? = null
-
     val blueprints = repository.getBlueprints()
     val favouriteBlueprints = repository.getFavouriteBlueprints()
     val lastEditedBlueprints = repository.getBlueprints().map { list ->
-        if (list.isNotEmpty()) {
-
-            blueprintsList = list.toMutableList()
-
-
-
-
-            list.sortedBy { LocalDateTime.parse(it.lastEdited) }
-            //lastEditedBlueprint = LastEditedBlueprint(list.last())
-            list.filter { blueprint ->
-                LocalDateTime.parse(blueprint.lastEdited).isAfter(LocalDateTime.now().minusWeeks(1))
-            }
-        } else
-            listOf()
+        //if (list.isNotEmpty()) {
+        //list.sortedBy { LocalDateTime.parse(it.lastEdited) }
+        //lastEditedBlueprint = LastEditedBlueprint(list.last())
+        list.filter { blueprint ->
+            LocalDateTime.parse(blueprint.lastEdited).isAfter(LocalDateTime.now().minusWeeks(1))
+        }
+        //} else
+        //listOf()
     }
-    //var lastEditedBlueprints: List<Blueprint> = emptyList()
-    var lastEditedBlueprint = LastEditedBlueprintsList(blueprintsList)
+    lateinit var lastEditedBlueprintData: LastEditedBlueprint
+
     var currentIntroData = IntroData(Color.White, Color.White, "", Decoration.Sun)
 
     init {
         currentIntroData = setIntroData()
-        //populateLastEditedList()
+        lastEditedBlueprintData = LastEditedBlueprint()
     }
 
 
@@ -152,7 +167,10 @@ private fun getTasksInBp(id: Int): List<Task> {
             is MainScreenEvent.OnDeleteBpClick -> {
                 viewModelScope.launch {
                     deletedBlueprint = event.blueprint
+                    deletedBlueprintTasks = repository.getTasksInBlueprint(event.blueprint.id!!)
+                    repository.deleteAllTasks(event.blueprint.id!!)
                     repository.deleteBlueprint(event.blueprint)
+
                     sendUiEvent(UiEvent.ShowSnackbar(
                         message = "Чертёж удалён",
                         action = "Вернуть"
@@ -163,6 +181,9 @@ private fun getTasksInBp(id: Int): List<Task> {
                 deletedBlueprint?.let { blueprint ->
                     viewModelScope.launch {
                         repository.insertBlueprint(blueprint)
+                        deletedBlueprintTasks.forEach {
+                            repository.insertTask(it)
+                        }
                     }
                 }
             }
@@ -188,7 +209,8 @@ private fun getTasksInBp(id: Int): List<Task> {
 
     enum class Decoration {
         Stars,
-        Sun
+        Sun,
+        Moon
     }
 
     data class IntroData(
@@ -198,17 +220,6 @@ private fun getTasksInBp(id: Int): List<Task> {
         val decoration: Decoration,
         val currentTime: Int = 0,
     )
-
-/*    private fun populateLastEditedList() {
-        suspend {
-            lastEditedBlueprints = repository.getBlueprintsList()
-            lastEditedBlueprints.filter { blueprint ->
-                LocalDateTime.parse(blueprint.lastEdited).isAfter(LocalDateTime.now().minusWeeks(1))
-            }
-        }
-
-        //lastEditedBlueprint = list.maxByOrNull { LocalDate.parse(it.lastEdited) }!!
-    }*/
 
     private fun setIntroData(): IntroData {
 
@@ -224,7 +235,7 @@ private fun getTasksInBp(id: Int): List<Task> {
             in evening..midnight -> IntroData(Intro.EveningTop,
                 Intro.EveningBottom,
                 "Добрый вечер",
-                Decoration.Stars,
+                Decoration.Moon,
                 currentTime)
             in midday..evening -> IntroData(Intro.MiddayTop,
                 Intro.MiddayBottom,
@@ -234,12 +245,12 @@ private fun getTasksInBp(id: Int): List<Task> {
             in morning..midday -> IntroData(Intro.MorningTop,
                 Intro.MorningBottom,
                 "Доброе утро",
-                Decoration.Stars,
+                Decoration.Moon,
                 currentTime)
             else -> IntroData(Intro.MidnightTop,
                 Intro.MidnightBottom,
                 "Доброй ночи",
-                Decoration.Stars,
+                Decoration.Moon,
                 currentTime)
         }
 

@@ -21,8 +21,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
@@ -32,6 +32,7 @@ import androidx.compose.ui.input.pointer.*
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onPlaced
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.imageResource
@@ -347,10 +348,79 @@ fun EditorScreen(
             }*/
             //var containerSize: LayoutCoordinates? = null
             Box(Modifier.zIndex(4f)/*.onGloballyPositioned { containerSize = it }*/) {
-                Row() {
-                    for (_task in tasks) {
-                        Task(_task.title, _task, viewModel::onEvent)
+
+                val isParallelButtonVisible: Boolean
+                val isSerialButtonVisible: Boolean
+
+                // Ряд родителей
+                Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+                    // Для каждой задачи
+                    for (task in tasks) {
+                        // Если задача первая в иерархии
+                        if (task.parentId == -1) {
+                            // Добавляем новую ветку
+                            Column() {
+
+                                // Добавляем родителя ветки
+                                Task(task.title, task, onEvent = viewModel::onEvent)
+
+                                // Добавляем потомков
+                                AddNestedTasks(parentTask = task,
+                                    tasksList = tasks,
+                                    onEvent = viewModel::onEvent)
+                            }
+                        }
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun AddNestedTasks(
+    parentTask: EditorScreenViewModel.Task,
+    tasksList: List<EditorScreenViewModel.Task>,
+    onEvent: (EditorScreenEvent) -> Unit,
+) {
+    // Ищем потомков родителя
+    var childTasks = tasksList.filter {
+        it.parentId == parentTask.id
+    }
+
+    if(childTasks.isNotEmpty()) {
+        Row {
+            // Для каждого потомка
+            for (childTask in childTasks) {
+                Column {
+                    // Horizontal line
+                    Box(modifier = Modifier
+                        .height(IntrinsicSize.Min)
+                        .width(IntrinsicSize.Min)
+                        .drawBehind {
+                            drawLine(
+                                start = Offset(x = this.size.width / 2, y = this.size.height / 2),
+                                end = Offset(x = - 40 * density,
+                                    y = this.size.height / 2),
+                                color = AzureTheme.AccentColor.copy(alpha = 1f),
+                                strokeWidth = 15f)
+                        }) {
+                        Task(childTask.title, childTask, onEvent = onEvent)
+                    }
+
+/*                // Vertical line
+                Box(modifier = Modifier
+                    .height(30.dp)
+                    .width(360.dp)
+                    .drawBehind {
+                        drawLine(start = Offset(x = this.size.width / 2, y = -40f * density),
+                            end = Offset(x = this.size.width / 2,
+                                y = this.size.height + 40 * density),
+                            color = AzureTheme.AccentColor.copy(alpha = 1f),
+                            strokeWidth = 15f)
+                    }){}*/
+
+                    AddNestedTasks(parentTask = childTask, tasksList = tasksList, onEvent = onEvent)
                 }
             }
         }
@@ -482,6 +552,8 @@ fun ListWidget(
     onEvent: (EditorScreenEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var additionalPadding = 0.dp
+
     Surface(elevation = 2.dp,
         shape = RoundedCornerShape(15.dp), //color = ExtendedTheme.colors.surfaceLight,
         modifier = Modifier
@@ -514,6 +586,7 @@ fun ListWidget(
                 }
             }
 
+            additionalPadding = if (widget.itemList.isEmpty()) 10.dp else 0.dp
             widget.itemList.forEachIndexed() { index, item ->
                 var isChecked by remember { mutableStateOf(false) }
                 var text by remember { mutableStateOf("") }
@@ -536,8 +609,8 @@ fun ListWidget(
                             text)
                         )
                     },
-                    colors = CheckboxDefaults.colors(checkedColor = ExtendedTheme.colors.accent,
-                        uncheckedColor = ExtendedTheme.colors.accent))
+                        colors = CheckboxDefaults.colors(checkedColor = ExtendedTheme.colors.accent,
+                            uncheckedColor = ExtendedTheme.colors.accent))
                     CustomTextField(
                         value = text,
                         backgroundColor = Color.White,
@@ -576,7 +649,7 @@ fun ListWidget(
             Surface(modifier = Modifier
                 .fillMaxWidth()
                 .weight(0.9f, false)
-                .padding(horizontal = 30.dp, vertical = 0.dp)
+                .padding(start = 30.dp, end = 30.dp, bottom = additionalPadding)
                 .height(14.dp),
                 shape = RoundedCornerShape(15.dp),
                 color = ExtendedTheme.colors.accent,
@@ -629,6 +702,8 @@ fun WidgetMenuItem(
 fun Task(
     title: String,
     task: EditorScreenViewModel.Task,
+    isParallelButtonVisible: Boolean = true,
+    isSerialButtonVisible: Boolean = true,
     onEvent: (EditorScreenEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -752,27 +827,31 @@ fun Task(
                     // endregion
                 }
             }
-            // SerialButton
-            CustomCircleButton(onClick = { },
-                icon = R.drawable.branch_serial,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .rotate(90f)
-            )
-            // ParallelButton
-            CustomCircleButton(onClick = { },
-                icon = R.drawable.branch_parallel,
-                modifier = Modifier.align(Alignment.CenterEnd)
-            )
+            if (isSerialButtonVisible) {
+                // SerialButton
+                CustomCircleButton(onClick = { onEvent(EditorScreenEvent.OnAddTaskSerialClick(task)) },
+                    icon = R.drawable.branch_serial,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .rotate(90f)
+                )
+            }
+            if (isParallelButtonVisible) {
+                // ParallelButton
+                CustomCircleButton(onClick = { onEvent(EditorScreenEvent.OnAddTaskParallelClick(task)) },
+                    icon = R.drawable.branch_parallel,
+                    modifier = Modifier.align(Alignment.CenterEnd)
+                )
+            }
         }
         // region Появление меню
         AnimatedVisibility(
             modifier = Modifier
-                .offset(x = (120).dp)
-                .align(Alignment.CenterEnd),
+                .offset(x = 100.dp, y = -20.dp)
+                .align(Alignment.BottomEnd),
             visible = isMenuVisible,
             enter = slideInHorizontally(
-                initialOffsetX = { -40 },
+                initialOffsetX = { -100 },
                 animationSpec = tween(
                     durationMillis = 400,
                     easing = FastOutSlowInEasing
@@ -789,7 +868,7 @@ fun Task(
                 )
             ),
             exit = slideOutHorizontally(
-                targetOffsetX = { -40 },
+                targetOffsetX = { -100 },
                 animationSpec = tween(
                     durationMillis = 400,
                     easing = LinearEasing
@@ -824,7 +903,10 @@ fun AddWidgetMenu(
     Card(backgroundColor = ExtendedTheme.colors.accentLight,
         elevation = 0.dp,
         shape = RoundedCornerShape(15.dp),
-        modifier = Modifier.width(230.dp)) {
+        modifier = Modifier
+            .width(230.dp)
+            .border(BorderStroke(2.dp, ExtendedTheme.colors.textColored.copy(alpha = 0.2f)),
+                RoundedCornerShape(15.dp))) {
         Column(verticalArrangement = Arrangement.spacedBy(5.dp),
             modifier = Modifier
                 .fillMaxSize()

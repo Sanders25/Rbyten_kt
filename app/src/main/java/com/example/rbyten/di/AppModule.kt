@@ -19,7 +19,7 @@ object AppModule {
             app,
             RbytenDatabase::class.java,
             "rbyten_db"
-        )/*.fallbackToDestructiveMigration().addMigrations(MIGRATION_4_5)*///.addTypeConverter(Converters())
+        )/*.fallbackToDestructiveMigration().addMigrations(MIGRATION_8_9)*///.addTypeConverter(Converters())
             .build()
     }
 

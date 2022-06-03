@@ -8,13 +8,13 @@ import com.example.rbyten.data.entities.Task
 import java.util.*
 
 @Database(
-    version = 6,
+    version = 11,
     entities = [
         Blueprint::class,
         Task::class
     ],
     autoMigrations = [
-        AutoMigration(from = 5, to = 6)
+        AutoMigration(from = 10, to = 11)
     ],
     exportSchema = true
 )
@@ -37,13 +37,24 @@ abstract class RbytenDatabase : RoomDatabase() {
     abstract val rbytenDao: RbytenDao
 }
 
-val MIGRATION_4_5 = object : Migration(4, 5) {
+val MIGRATION_7_8 = object : Migration(7, 8) {
     override fun migrate(database: SupportSQLiteDatabase) {
         database.execSQL(
             "DROP TABLE Task;"
         )
         database.execSQL(
-            "CREATE TABLE IF NOT EXISTS `Task` (`id` INTEGER NOT NULL, `blueprintId` INTEGER NOT NULL DEFAULT -1, `title` TEXT NOT NULL, `content` TEXT NOT NULL, PRIMARY KEY(`id`, `blueprintId`));"
+            "CREATE TABLE IF NOT EXISTS `Task` (`id` INTEGER NOT NULL, `blueprintId` INTEGER NOT NULL DEFAULT -1, `title` TEXT NOT NULL, `content` TEXT NOT NULL, PRIMARY KEY(`id`, `blueprintId`), FOREIGN KEY(`blueprintId`) REFERENCES `Blueprint`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )"
+        )
+    }
+}
+
+val MIGRATION_8_9 = object : Migration(8, 9) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        database.execSQL(
+            "DROP TABLE Task;"
+        )
+        database.execSQL(
+            "CREATE TABLE IF NOT EXISTS `Task` (`id` INTEGER NOT NULL, `blueprintId` INTEGER NOT NULL DEFAULT -1, `title` TEXT NOT NULL, `content` TEXT NOT NULL, PRIMARY KEY(`id`, `blueprintId`))",
         )
     }
 }

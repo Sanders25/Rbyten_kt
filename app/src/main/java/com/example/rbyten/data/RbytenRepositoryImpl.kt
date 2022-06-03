@@ -38,6 +38,10 @@ class RbytenRepositoryImpl(private val dao: RbytenDao): RbytenRepository {
         dao.deleteTask(id, blueprintId)
     }
 
+    override suspend fun deleteAllTasks(blueprintId: Int) {
+        dao.deleteAllTasks(blueprintId)
+    }
+
     override suspend fun getTaskById(id: Int, blueprintId: Int): Task? {
         return dao.getTaskById(id, blueprintId)
     }

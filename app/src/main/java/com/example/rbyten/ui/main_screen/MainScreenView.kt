@@ -417,6 +417,8 @@ fun IntroCard(
     modifier: Modifier = Modifier,
 ) {
 
+    val decoration by remember { mutableStateOf(viewModel.currentIntroData.decoration) }
+
     val starPath = Path().apply {
         moveTo(-4.5f, 1f)
         lineTo(-1.5f, 1.5f)
@@ -492,12 +494,49 @@ fun IntroCard(
         )
     )
 
-    val animatedSunAlpha by infiniteScale.animateFloat(
+    val animatedSunAlphaScale by infiniteScale.animateFloat(
         initialValue = 120f,
         targetValue = 140f,
         animationSpec = infiniteRepeatable(
             animation = tween(
                 durationMillis = 4000,
+                easing = { OvershootInterpolator().getInterpolation(it) }
+            ),
+            repeatMode = RepeatMode.Reverse,
+            initialStartOffset = StartOffset(500)
+        )
+    )
+
+    val animatedMoon by infiniteScale.animateFloat(
+        initialValue = 60f,
+        targetValue = 70f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(
+                durationMillis = 6000,
+                easing = { OvershootInterpolator().getInterpolation(it) }
+            ),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+
+    val animatedMoonAlphaScale by infiniteScale.animateFloat(
+        initialValue = 70f,
+        targetValue = 75f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(
+                durationMillis = 6000,
+                easing = { OvershootInterpolator().getInterpolation(it) }
+            ),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+
+    val animatedMoonAlpha by infiniteScale.animateFloat(
+        initialValue = 0.1f,
+        targetValue = 0.3f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(
+                durationMillis = 6000,
                 easing = { OvershootInterpolator().getInterpolation(it) }
             ),
             repeatMode = RepeatMode.Reverse,
@@ -548,31 +587,70 @@ fun IntroCard(
                         viewModel.currentIntroData.BottomColor)),
                         size = this.size)
 
-                    if (viewModel.currentIntroData.decoration == MainScreenViewModel.Decoration.Stars) {
-                        // Звёзды
-/*                        for (i in 1..30) {
-                            starPath.translate(Offset(
-                                x = (rand.nextInt(30..60)).toFloat(),
-                                y = ((rand
-                                    .nextInt(0..40)
-                                    .toFloat() * ((-1f).pow(i))))))
+                    when (decoration) {
+                        MainScreenViewModel.Decoration.Stars -> {
+                            // Звёзды
+                            /*                        for (i in 1..30) {
+                                                        starPath.translate(Offset(
+                                                            x = (rand.nextInt(30..60)).toFloat(),
+                                                            y = ((rand
+                                                                .nextInt(0..40)
+                                                                .toFloat() * ((-1f).pow(i))))))
 
-                            drawPath(starPath, Color.White.copy(alpha = 0.5f))
-                        }*/
-                    } else {
-                        var currentTime = viewModel.currentIntroData.currentTime
-                        drawCircle(
-                            color = Color.White,
-                            center = Offset(x = currentTime % 12 * (this.size.width / 6),
-                                y = this.size.height / 10 - (3 - (abs(currentTime % 12 - 3))) * (this.size.height / 25)),
-                            radius = animatedSun
-                        )
-                        drawCircle(
-                            color = Color.White.copy(alpha = 0.5f),
-                            center = Offset(x = currentTime % 12 * (this.size.width / 6),
-                                y = this.size.height / 10 - (3 - (abs(currentTime % 12 - 3))) * (this.size.height / 25)),
-                            radius = animatedSunAlpha
-                        )
+                                                        drawPath(starPath, Color.White.copy(alpha = 0.5f))
+                                                    }*/
+                        }
+                        MainScreenViewModel.Decoration.Sun -> {
+                            val currentTime = viewModel.currentIntroData.currentTime
+                            val sunPosition = Offset(x = currentTime % 12 * (this.size.width / 6),
+                                this.size.height / 10 - (3 - (abs(currentTime % 12 - 3))) * (this.size.height / 25))
+
+                            drawCircle(
+                                color = Color.White,
+                                center = sunPosition,
+                                radius = animatedSun
+                            )
+                            drawCircle(
+                                color = Color.White.copy(alpha = 0.5f),
+                                center = sunPosition,
+                                radius = animatedSunAlphaScale
+                            )
+                        }
+                        MainScreenViewModel.Decoration.Moon -> {
+                            val moonPosition = Offset(x = this.size.width - this.size.width / 6,
+                                y = this.size.height / 8)
+
+                            drawCircle(
+                                color = Color.White,
+                                center = Offset(moonPosition.x + 5, moonPosition.y - 5),
+                                radius = 60f
+                            )
+                            drawCircle(
+                                color = AzureTheme.SurfaceLightDarkestColor.copy(alpha = 0.5f),
+                                center = Offset(moonPosition.x + 15, moonPosition.y + 10),
+                                radius = 10f
+                            )
+                            drawCircle(
+                                color = AzureTheme.SurfaceLightDarkestColor.copy(alpha = 0.5f),
+                                center = Offset(moonPosition.x - 10, moonPosition.y + 5),
+                                radius = 4f
+                            )
+                            drawCircle(
+                                color = AzureTheme.SurfaceLightDarkestColor.copy(alpha = 0.5f),
+                                center = Offset(moonPosition.x - 14, moonPosition.y - 10),
+                                radius = 6f
+                            )
+                            drawCircle(
+                                color = Color.White.copy(alpha = 0.5f),
+                                center = moonPosition,
+                                radius = 68f
+                            )
+                            drawCircle(
+                                color = Color.White.copy(alpha = animatedMoonAlpha),
+                                center = moonPosition,
+                                radius = animatedMoonAlphaScale
+                            )
+                        }
                     }
                     drawPath(path = path,
                         color = Color.White.copy(alpha = if (lazyListState.firstVisibleItemScrollOffset != 0) 0f else 0.3f))
@@ -672,8 +750,8 @@ fun IntroContentBlank(viewModel: MainScreenViewModel) {
 @Composable
 fun IntroContent(viewModel: MainScreenViewModel) {
 
-    val lastEditedBlueprint = viewModel.lastEditedBlueprint
-    val tasksCount by remember { mutableStateOf(viewModel.lastEditedBlueprint?.tasksCount) }
+    val lastEditedBlueprintData by remember{ mutableStateOf(viewModel.lastEditedBlueprintData)}
+    //val tasksCount by remember { mutableStateOf(viewModel.lastEditedBlueprintData.tasksCount) }
 
     Column(Modifier
         .fillMaxSize()) {
@@ -722,8 +800,9 @@ fun IntroContent(viewModel: MainScreenViewModel) {
                         elevation = 2.dp,
                         modifier = Modifier.size(35.dp)) {
                         Box {
-                            Text(text = tasksCount.toString(),
-                                style = MaterialTheme.typography.smallAccentText,
+                            Text(text = lastEditedBlueprintData.tasksCount.toString(),
+                                style = MaterialTheme.typography.smallText,
+                                fontSize = 20.sp,
                                 color = ExtendedTheme.colors.textDark,
                                 textAlign = TextAlign.Center,
                                 modifier = Modifier.align(Alignment.Center)
@@ -731,7 +810,7 @@ fun IntroContent(viewModel: MainScreenViewModel) {
                         }
                     }
 
-                    Spacer(modifier = Modifier.weight(0.4f))
+                    Spacer(modifier = Modifier.weight(0.33f))
 
                     Text(text = "задач",
                         style = MaterialTheme.typography.smallAccentText,
@@ -746,8 +825,9 @@ fun IntroContent(viewModel: MainScreenViewModel) {
                         elevation = 2.dp,
                         modifier = Modifier.size(35.dp)) {
                         Box {
-                            Text(text = lastEditedBlueprint?.tasksCompleted.toString(),
-                                style = MaterialTheme.typography.smallAccentText,
+                            Text(text = lastEditedBlueprintData.tasksCompleted.toString(),
+                                style = MaterialTheme.typography.smallText,
+                                fontSize = 20.sp,
                                 color = ExtendedTheme.colors.textDark,
                                 textAlign = TextAlign.Center,
                                 modifier = Modifier.align(Alignment.Center)
@@ -775,8 +855,9 @@ fun IntroContent(viewModel: MainScreenViewModel) {
                         elevation = 2.dp,
                         modifier = Modifier.size(35.dp)) {
                         Box {
-                            Text(text = lastEditedBlueprint?.deadline ?: "",
-                                style = MaterialTheme.typography.smallAccentText,
+                            Text(text = lastEditedBlueprintData.deadline,
+                                style = MaterialTheme.typography.smallText,
+                                fontSize = 20.sp,
                                 color = ExtendedTheme.colors.textDark,
                                 textAlign = TextAlign.Center,
                                 modifier = Modifier.align(Alignment.Center)
@@ -801,7 +882,7 @@ fun IntroContent(viewModel: MainScreenViewModel) {
                 shape = RoundedCornerShape(20.dp),
                 elevation = 3.dp,
                 backgroundColor = ExtendedTheme.colors.surfaceLight,
-                onClick = { viewModel.onEvent(MainScreenEvent.OnBpClick(lastEditedBlueprint?.blueprint!!)) }
+                onClick = { viewModel.onEvent(MainScreenEvent.OnBpClick(lastEditedBlueprintData.lastEditedBlueprint)) }
             )
             {
                 Column() {
@@ -813,7 +894,7 @@ fun IntroContent(viewModel: MainScreenViewModel) {
 
                         ) {
                         Text(
-                            text = lastEditedBlueprint?.blueprint?.title ?: "",
+                            text = lastEditedBlueprintData.lastEditedBlueprint.title,
                             style = MaterialTheme.typography.cardHeader,
                             textAlign = TextAlign.Center,
                             color = ExtendedTheme.colors.textLight,

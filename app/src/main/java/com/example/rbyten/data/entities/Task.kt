@@ -15,16 +15,7 @@ data class Task(
     @NonNull
     val blueprintId: Int,
     val title: String,
-    val content: String
+    val content: String,
+    @ColumnInfo(name = "parentId", defaultValue = "-1")
+    val parentId: Int
 )
-
-/*val MIGRATION_4_5 = object : Migration(4, 5) {
-    override fun migrate(database: SupportSQLiteDatabase) {
-        database.execSQL(
-            "DROP TABLE Task;"
-        )
-        database.execSQL(
-            "CREATE TABLE IF NOT EXISTS `Task` (`id` INTEGER NOT NULL, `blueprintId` INTEGER NOT NULL DEFAULT -1, `title` TEXT NOT NULL, `content` TEXT NOT NULL, PRIMARY KEY(`id`, `blueprintId`));"
-        )
-    }
-}*/

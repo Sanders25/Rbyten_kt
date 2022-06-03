@@ -4,6 +4,8 @@ sealed class EditorScreenEvent {
     data class OnTitleChange(val title: String) : EditorScreenEvent()
     data class OnDescriptionChange(val description: String) : EditorScreenEvent()
     data class OnAddTaskClick(val title: String): EditorScreenEvent()
+    data class OnAddTaskSerialClick(val parentTask: EditorScreenViewModel.Task): EditorScreenEvent()
+    data class OnAddTaskParallelClick(val parallelTask: EditorScreenViewModel.Task): EditorScreenEvent()
     data class OnTaskDeleteClick(val task: EditorScreenViewModel.Task): EditorScreenEvent()
     //data class OnWidgetMenuStateChange(val task: EditorScreenViewModel.Task): EditorScreenEvent()
     data class OnAddWidget(val task: EditorScreenViewModel.Task, val widgetType: String): EditorScreenEvent()

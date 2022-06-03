@@ -28,6 +28,8 @@ interface RbytenDao {
     suspend fun insertTask(task: Task)
     @Query("DELETE FROM task WHERE id = :id AND blueprintId = :blueprintId")
     suspend fun deleteTask(id: Int, blueprintId: Int)
+    @Query("DELETE FROM task WHERE blueprintId = :blueprintId")
+    suspend fun deleteAllTasks(blueprintId: Int)
 
     @Query("SELECT * FROM task WHERE id = :id AND blueprintId = :blueprintId")
     suspend fun getTaskById(id: Int, blueprintId: Int): Task?
@@ -35,6 +37,8 @@ interface RbytenDao {
     fun getAllTasks(): Flow<List<Task>>
     @Query("SELECT * FROM task WHERE blueprintId = :id")
     suspend fun getTasksInBlueprint(id: Int): List<Task>
+
+//    suspend fun getChildTasksInTask(taskId: Int): List<Task>
     // endregion
 
 }
