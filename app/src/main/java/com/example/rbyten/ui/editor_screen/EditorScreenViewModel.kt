@@ -1,34 +1,23 @@
 package com.example.rbyten.ui.editor_screen
 
-import android.graphics.Bitmap
 import android.graphics.Color
-import android.icu.text.MessageFormat.format
-import android.text.format.DateFormat.format
-import android.util.Log
 import androidx.compose.runtime.*
-import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.rbyten.data.RbytenRepository
 import com.example.rbyten.data.entities.Blueprint
-import com.example.rbyten.data.entities.Task
-import android.text.format.DateFormat
-import com.example.rbyten.ui.theme.AzureTheme
 import com.example.rbyten.util.UiEvent
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import java.lang.String.format
-import java.text.MessageFormat.format
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
-import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Inject
 
@@ -62,13 +51,16 @@ class EditorScreenViewModel @Inject constructor(
     class Task(_title: String) {
         var id = count.incrementAndGet()
         var parentId: Int = -1
+        var children: MutableList<Task> = mutableStateListOf()
         var title: String = _title
         var content: MutableList<Widget<Any>> = mutableStateListOf()
         var isMenuOpen: Boolean = false
 
         companion object {
-            private val count: AtomicInteger = AtomicInteger(0)
+            var count: AtomicInteger = AtomicInteger(0)
         }
+
+        var idCounter = Companion
     }
 
     data class Widget<T>(
@@ -188,8 +180,13 @@ class EditorScreenViewModel @Inject constructor(
                 writeToDatabase(event.task)
             }
             is EditorScreenEvent.OnTaskDeleteClick -> {
+                if (cachedTasks.isNotEmpty() && event.task.children.isNotEmpty())
+                    cachedTasks.removeIf {
+                        it.parentId == event.task.id
+                    }//.children.remove(event.task)
                 cachedTasks.remove(event.task)
                 viewModelScope.launch {
+                    repository.deleteChildrenOfTask(event.task.id, blueprint?.id!!)
                     repository.deleteTask(event.task.id, blueprint?.id!!)
                 }
             }
@@ -198,6 +195,9 @@ class EditorScreenViewModel @Inject constructor(
                     val newTask = Task(event.parallelTask.title + " (подзадача)")
                     newTask.parentId = event.parallelTask.parentId
                     cachedTasks.add(newTask)
+                    cachedTasks.first {
+                        it.id == newTask.parentId
+                    }.children.add(newTask)
                     writeToDatabase(newTask)
                 }
             }
@@ -206,6 +206,7 @@ class EditorScreenViewModel @Inject constructor(
                     val newTask = Task(event.parentTask.title + " (подзадача)")
                     newTask.parentId = event.parentTask.id
                     cachedTasks.add(newTask)
+                    event.parentTask.children.add(newTask)
                     writeToDatabase(newTask)
                 }
             }
@@ -220,7 +221,7 @@ class EditorScreenViewModel @Inject constructor(
 
     private fun writeToDatabase(_task: Task) {
 
-            blueprintLastEdited = LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS).toString()
+        blueprintLastEdited = LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS).toString()
         val taskEntity = com.example.rbyten.data.entities.Task(
             blueprintId = blueprint!!.id!!,
             title = _task.title,
@@ -252,23 +253,32 @@ class EditorScreenViewModel @Inject constructor(
     private suspend fun loadTasksFromDatabase() {
         viewModelScope.launch {
             repository.getTasksInBlueprint(blueprint?.id!!).forEach { task ->
-                val _task = Task(task.title)
-                _task.id = task.id
-                _task.parentId = task.parentId
+                val newTask = Task(task.title)
+                newTask.id = task.id
+                newTask.parentId = task.parentId
 
                 val loadedWidgets = jsonToTask(task.content)
 
                 loadedWidgets.texts.forEach {
-                    _task.content.add(Widget("text", it))
+                    newTask.content.add(Widget("text", it))
                 }
                 loadedWidgets.lists.forEach {
-                    _task.content.add(Widget("list", it))
+                    newTask.content.add(Widget("list", it))
                 }
 
                 cachedTasks.add(
-                    _task
+                    newTask
                 )
+                newTask.idCounter.count.set(cachedTasks.maxOf { it.id })
             }
+
+            cachedTasks.forEach { task ->
+                cachedTasks.forEach { innerTask ->
+                    if (innerTask.parentId == task.id)
+                        task.children.add(innerTask)
+                }
+            }
+
         }
     }
 

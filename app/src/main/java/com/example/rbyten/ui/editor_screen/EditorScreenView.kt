@@ -38,6 +38,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -359,15 +360,45 @@ fun EditorScreen(
                         // Если задача первая в иерархии
                         if (task.parentId == -1) {
                             // Добавляем новую ветку
-                            Column() {
-
+                            Column {
+                                /*Box(Modifier
+                                    .height(IntrinsicSize.Min)
+                                    .width(IntrinsicSize.Min)
+                                    .drawBehind {
+                                        // Vertical line
+                                        drawLine(
+                                            start = Offset(x = 180 * density, y = 40f * density),
+                                            end = Offset(x = 180 * density,
+                                                y = this.size.height + 80 * density),
+                                            color = AzureTheme.AccentColor.copy(alpha = 1f),
+                                            strokeWidth = 15f)
+                                    }) {*/
                                 // Добавляем родителя ветки
-                                Task(task.title, task, onEvent = viewModel::onEvent)
-
+                                if (task.children.isEmpty())
+                                    Task(task.title,
+                                        task,
+                                        onEvent = viewModel::onEvent,
+                                        isSerialButtonVisible = true
+                                    )
+                                else
+                                    Task(task.title,
+                                        task,
+                                        onEvent = viewModel::onEvent
+                                    )
+                                //}
                                 // Добавляем потомков
-                                AddNestedTasks(parentTask = task,
+                                AddNestedTasks(parentTask = task, viewModel = viewModel)
+//                                val childTasks = viewModel.addNestedTasks(task)
+
+                                /*Row {
+                                    childTasks.forEach { childTask ->
+                                        Task(title = childTask.title, task = childTask, onEvent = viewModel::onEvent)
+                                    }
+                                }*/
+
+/*                                AddNestedTasks(parentTask = task,
                                     tasksList = tasks,
-                                    onEvent = viewModel::onEvent)
+                                    onEvent = viewModel::onEvent)*/
                             }
                         }
                     }
@@ -378,55 +409,256 @@ fun EditorScreen(
 }
 
 @Composable
-fun AddNestedTasks(
-    parentTask: EditorScreenViewModel.Task,
-    tasksList: List<EditorScreenViewModel.Task>,
-    onEvent: (EditorScreenEvent) -> Unit,
-) {
-    // Ищем потомков родителя
-    var childTasks = tasksList.filter {
-        it.parentId == parentTask.id
-    }
+fun AddNestedTasks(parentTask: EditorScreenViewModel.Task, viewModel: EditorScreenViewModel) {
 
-    if(childTasks.isNotEmpty()) {
-        Row {
-            // Для каждого потомка
-            for (childTask in childTasks) {
-                Column {
-                    // Horizontal line
-                    Box(modifier = Modifier
-                        .height(IntrinsicSize.Min)
-                        .width(IntrinsicSize.Min)
-                        .drawBehind {
+
+    Row() {
+        //Column {
+        parentTask.children.forEachIndexed { index, childTask ->
+            Column {
+                var isSerialButtonVisible = false
+                var isParallelButtonVisible = false
+
+                if (childTask.children.isEmpty()) isSerialButtonVisible = true
+                if ((index == parentTask.children.size - 1)) isParallelButtonVisible = true
+
+                if (index != 0)
+                    Task(
+                        title = childTask.title,
+                        isSerialButtonVisible = isSerialButtonVisible,
+                        isParallelButtonVisible = isParallelButtonVisible,
+                        task = childTask,
+                        onEvent = viewModel::onEvent,
+                        modifier = Modifier.drawBehind {
+                            // Horizontal line
                             drawLine(
-                                start = Offset(x = this.size.width / 2, y = this.size.height / 2),
-                                end = Offset(x = - 40 * density,
-                                    y = this.size.height / 2),
+                                start = Offset(x = -40 * density, y = 134 * density),
+                                end = Offset(x = 40 * density, y = 134 * density),
                                 color = AzureTheme.AccentColor.copy(alpha = 1f),
                                 strokeWidth = 15f)
-                        }) {
-                        Task(childTask.title, childTask, onEvent = onEvent)
-                    }
-
-/*                // Vertical line
-                Box(modifier = Modifier
-                    .height(30.dp)
-                    .width(360.dp)
-                    .drawBehind {
-                        drawLine(start = Offset(x = this.size.width / 2, y = -40f * density),
-                            end = Offset(x = this.size.width / 2,
-                                y = this.size.height + 40 * density),
-                            color = AzureTheme.AccentColor.copy(alpha = 1f),
-                            strokeWidth = 15f)
-                    }){}*/
-
-                    AddNestedTasks(parentTask = childTask, tasksList = tasksList, onEvent = onEvent)
-                }
+                        }
+                    )
+                else
+                    Task(
+                        title = childTask.title,
+                        isSerialButtonVisible = isSerialButtonVisible,
+                        isParallelButtonVisible = isParallelButtonVisible,
+                        task = childTask,
+                        onEvent = viewModel::onEvent,
+                        modifier = Modifier.drawBehind {
+                            // Horizontal line
+                            drawLine(
+                                start = Offset(x = this.size.width / 2, y = -40f * density),
+                                end = Offset(x = this.size.width / 2, y = 40f * density),
+                                color = AzureTheme.AccentColor.copy(alpha = 1f),
+                                strokeWidth = 15f)
+                        }
+                    )
+                AddNestedTasks(parentTask = childTask, viewModel = viewModel)
             }
         }
     }
 }
 
+@Composable
+fun Task(
+    title: String,
+    task: EditorScreenViewModel.Task,
+    isParallelButtonVisible: Boolean = false,
+    isSerialButtonVisible: Boolean = false,
+    onEvent: (EditorScreenEvent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var isMenuVisible by remember { mutableStateOf(false) }
+
+    val widgetMenuButtonTransition =
+        updateTransition(targetState = isMenuVisible, label = "addBtnAnim")
+
+    // region Анимации кнопки добавить
+    val addBtnRotationAnim: Float by widgetMenuButtonTransition.animateFloat(
+        label = "rotation anim",
+        transitionSpec = {
+            tween(500, easing = LinearOutSlowInEasing)
+        }
+    )
+    { state ->
+        when (state) {
+            false -> 0f
+            true -> 135f
+        }
+    }
+
+    val addBtnColorAnim: Color by
+    widgetMenuButtonTransition.animateColor(
+        label = "color anim",
+        transitionSpec = { tween(500) },
+    )
+    { state ->
+        when (state) {
+            false -> ExtendedTheme.colors.accent
+            true -> ExtendedTheme.colors.error
+        }
+    }
+    // endregion
+    Box(modifier = modifier.zIndex(if (isMenuVisible) 5f else 0f)) {
+        Box {
+            Card(elevation = 2.dp,
+                modifier = Modifier
+                    //.wrapContentHeight()
+                    .width(360.dp)
+                    .padding(40.dp)
+            ) {
+                var additionalPadding = 0.dp
+
+                Column(horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier
+                        .fillMaxSize()) {
+                    // region Header
+                    Row(verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                        .fillMaxWidth()
+                        .height(40.dp)
+                        .background(ExtendedTheme.colors.accent)
+                    ) {
+                        Spacer(Modifier.weight(0.1f))
+                        Text(text = title,
+                            style = MaterialTheme.typography.cardHeader,
+                            color = ExtendedTheme.colors.textLight,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        IconButton(onClick = { onEvent(EditorScreenEvent.OnTaskDeleteClick(task)) },
+                            modifier = Modifier.weight(0.3f)) {
+                            Icon(Icons.Rounded.Close, null, tint = ExtendedTheme.colors.textLight)
+                        }
+                    }
+                    // endregion
+                    // region Body
+                    Box(contentAlignment = Alignment.Center, modifier = Modifier
+                        .fillMaxSize()) {
+                        Column(
+                            Modifier
+                                .wrapContentHeight()
+                                .align(Alignment.Center)
+                                .padding(8.dp, 8.dp, 8.dp, 0.dp),
+                            //.height(IntrinsicSize.Min),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            //-----------------------------------------------------------------------------
+                            var counter: Int = 1
+                            if (task.content.isEmpty())
+                                additionalPadding = 40.dp
+                            else
+                                additionalPadding = 0.dp
+
+                            task.content.forEachIndexed { index, widget ->
+                                when (widget.content) {
+                                    is EditorScreenViewModel.TextFieldWidget -> {
+                                        TextFieldWidget(task, widget.content, index, onEvent)
+                                    }
+                                    is EditorScreenViewModel.ListWidget -> {
+                                        ListWidget(task, widget.content, counter++, index, onEvent)
+                                    }
+                                }
+                            }
+                            //-----------------------------------------------------------------------------
+                            // Center Add button
+                            CustomCircleButton(onClick = {
+                                isMenuVisible = !isMenuVisible
+                                //onEvent(EditorScreenEvent.OnWidgetMenuStateChange(task))
+                            },
+                                icon = Icons.Rounded.Add,
+                                backgroundColor = addBtnColorAnim,
+                                size = 40.dp,
+                                modifier = Modifier
+                                    .padding(bottom = 10.dp)
+                                    .padding(vertical = additionalPadding)
+                                    .graphicsLayer { rotationZ = addBtnRotationAnim }
+                            )
+                        }
+                        // Expand / collapse children button
+                        CustomCircleButton(onClick = { },
+                            icon = Icons.Rounded.ArrowDropDown,
+                            size = 25.dp,
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(5.dp)
+                        )
+                    }
+                    // endregion
+                }
+            }
+            if (isSerialButtonVisible/*task.isSerialButtonVisible*/) {
+                // SerialButton
+                CustomCircleButton(onClick = { onEvent(EditorScreenEvent.OnAddTaskSerialClick(task)) },
+                    icon = R.drawable.branch_serial,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .rotate(90f)
+                )
+            }
+            if (isParallelButtonVisible/*task.isParallelButtonVisible*/) {
+                // ParallelButton
+                CustomCircleButton(onClick = { onEvent(EditorScreenEvent.OnAddTaskParallelClick(task)) },
+                    icon = R.drawable.branch_parallel,
+                    modifier = Modifier.align(Alignment.CenterEnd)
+                )
+            }
+        }
+        // region Появление меню
+        AnimatedVisibility(
+            modifier = Modifier
+                .offset(x = 100.dp, y = -20.dp)
+                .align(Alignment.BottomEnd),
+            visible = isMenuVisible,
+            enter = slideInHorizontally(
+                initialOffsetX = { -100 },
+                animationSpec = tween(
+                    durationMillis = 400,
+                    easing = FastOutSlowInEasing
+                )
+            ) + expandVertically(
+                expandFrom = Alignment.Top,
+                animationSpec = tween(
+                    durationMillis = 500,
+                    easing = FastOutSlowInEasing
+                )
+            ) + fadeIn(
+                animationSpec = tween(
+                    durationMillis = 300,
+                )
+            ),
+            exit = slideOutHorizontally(
+                targetOffsetX = { -100 },
+                animationSpec = tween(
+                    durationMillis = 400,
+                    easing = LinearEasing
+                )
+            ) + shrinkVertically(
+                shrinkTowards = Alignment.Top,
+                animationSpec = tween(
+                    durationMillis = 500,
+                    easing = FastOutSlowInEasing
+                )
+            ) + fadeOut(
+                animationSpec = tween(
+                    durationMillis = 300,
+                )
+            )
+        ) {
+            Box(
+                contentAlignment = Alignment.BottomEnd,
+            ) {
+                AddWidgetMenu(task, onEvent)
+            }
+        }
+        // endregion
+    }
+}
 
 @Composable
 fun NewCardMenu(onEvent: (EditorScreenEvent) -> Unit) {
@@ -694,204 +926,6 @@ fun WidgetMenuItem(
                 color = ExtendedTheme.colors.textColored)
             Spacer(modifier = Modifier.weight(1f))
         }
-    }
-}
-
-
-@Composable
-fun Task(
-    title: String,
-    task: EditorScreenViewModel.Task,
-    isParallelButtonVisible: Boolean = true,
-    isSerialButtonVisible: Boolean = true,
-    onEvent: (EditorScreenEvent) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    var isMenuVisible by remember { mutableStateOf(false) }
-
-    val widgetMenuButtonTransition =
-        updateTransition(targetState = isMenuVisible, label = "addBtnAnim")
-
-    // region Анимации кнопки добавить
-    val addBtnRotationAnim: Float by widgetMenuButtonTransition.animateFloat(
-        label = "rotation anim",
-        transitionSpec = {
-            tween(500, easing = LinearOutSlowInEasing)
-        }
-    )
-    { state ->
-        when (state) {
-            false -> 0f
-            true -> 135f
-        }
-    }
-
-    val addBtnColorAnim: Color by
-    widgetMenuButtonTransition.animateColor(
-        label = "color anim",
-        transitionSpec = { tween(500) },
-    )
-    { state ->
-        when (state) {
-            false -> ExtendedTheme.colors.accent
-            true -> ExtendedTheme.colors.error
-        }
-    }
-    // endregion
-    Box(modifier = Modifier.zIndex(if (isMenuVisible) 5f else 0f)) {
-        Box {
-            Card(elevation = 2.dp,
-                modifier = Modifier
-                    //.wrapContentHeight()
-                    .width(360.dp)
-                    .padding(40.dp)
-            ) {
-                var additionalPadding = 0.dp
-
-                Column(horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                    modifier = Modifier
-                        .fillMaxSize()) {
-                    // region Header
-                    Box(modifier = Modifier
-                        .fillMaxWidth()
-                        .height(40.dp)
-                        .background(ExtendedTheme.colors.accent)
-                    ) {
-                        Text(text = title,
-                            style = MaterialTheme.typography.cardHeader,
-                            color = ExtendedTheme.colors.textLight,
-                            modifier = Modifier.align(Alignment.Center)
-                        )
-
-                        IconButton(onClick = { onEvent(EditorScreenEvent.OnTaskDeleteClick(task)) },
-                            modifier = Modifier.align(
-                                Alignment.CenterEnd)) {
-                            Icon(Icons.Rounded.Close, null, tint = ExtendedTheme.colors.textLight)
-                        }
-                    }
-                    // endregion
-                    // region Body
-                    Box(contentAlignment = Alignment.Center, modifier = Modifier
-                        .fillMaxSize()) {
-                        Column(
-                            Modifier
-                                .wrapContentHeight()
-                                .align(Alignment.Center)
-                                .padding(8.dp, 8.dp, 8.dp, 0.dp),
-                            //.height(IntrinsicSize.Min),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            //-----------------------------------------------------------------------------
-                            var counter: Int = 1
-                            if (task.content.isEmpty())
-                                additionalPadding = 40.dp
-                            else
-                                additionalPadding = 0.dp
-
-                            task.content.forEachIndexed { index, widget ->
-                                when (widget.content) {
-                                    is EditorScreenViewModel.TextFieldWidget -> {
-                                        TextFieldWidget(task, widget.content, index, onEvent)
-                                    }
-                                    is EditorScreenViewModel.ListWidget -> {
-                                        ListWidget(task, widget.content, counter++, index, onEvent)
-                                    }
-                                }
-                            }
-                            //-----------------------------------------------------------------------------
-                            // Center Add button
-                            CustomCircleButton(onClick = {
-                                isMenuVisible = !isMenuVisible
-                                //onEvent(EditorScreenEvent.OnWidgetMenuStateChange(task))
-                            },
-                                icon = Icons.Rounded.Add,
-                                backgroundColor = addBtnColorAnim,
-                                size = 40.dp,
-                                modifier = Modifier
-                                    .padding(bottom = 10.dp)
-                                    .padding(vertical = additionalPadding)
-                                    .graphicsLayer { rotationZ = addBtnRotationAnim }
-                            )
-                        }
-                        // Expand / collapse children button
-                        CustomCircleButton(onClick = { },
-                            icon = Icons.Rounded.ArrowDropDown,
-                            size = 25.dp,
-                            modifier = Modifier
-                                .align(Alignment.BottomEnd)
-                                .padding(5.dp)
-                        )
-                    }
-                    // endregion
-                }
-            }
-            if (isSerialButtonVisible) {
-                // SerialButton
-                CustomCircleButton(onClick = { onEvent(EditorScreenEvent.OnAddTaskSerialClick(task)) },
-                    icon = R.drawable.branch_serial,
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .rotate(90f)
-                )
-            }
-            if (isParallelButtonVisible) {
-                // ParallelButton
-                CustomCircleButton(onClick = { onEvent(EditorScreenEvent.OnAddTaskParallelClick(task)) },
-                    icon = R.drawable.branch_parallel,
-                    modifier = Modifier.align(Alignment.CenterEnd)
-                )
-            }
-        }
-        // region Появление меню
-        AnimatedVisibility(
-            modifier = Modifier
-                .offset(x = 100.dp, y = -20.dp)
-                .align(Alignment.BottomEnd),
-            visible = isMenuVisible,
-            enter = slideInHorizontally(
-                initialOffsetX = { -100 },
-                animationSpec = tween(
-                    durationMillis = 400,
-                    easing = FastOutSlowInEasing
-                )
-            ) + expandVertically(
-                expandFrom = Alignment.Top,
-                animationSpec = tween(
-                    durationMillis = 500,
-                    easing = FastOutSlowInEasing
-                )
-            ) + fadeIn(
-                animationSpec = tween(
-                    durationMillis = 300,
-                )
-            ),
-            exit = slideOutHorizontally(
-                targetOffsetX = { -100 },
-                animationSpec = tween(
-                    durationMillis = 400,
-                    easing = LinearEasing
-                )
-            ) + shrinkVertically(
-                shrinkTowards = Alignment.Top,
-                animationSpec = tween(
-                    durationMillis = 500,
-                    easing = FastOutSlowInEasing
-                )
-            ) + fadeOut(
-                animationSpec = tween(
-                    durationMillis = 300,
-                )
-            )
-        ) {
-            Box(
-                contentAlignment = Alignment.BottomEnd,
-            ) {
-                AddWidgetMenu(task, onEvent)
-            }
-        }
-        // endregion
     }
 }
 

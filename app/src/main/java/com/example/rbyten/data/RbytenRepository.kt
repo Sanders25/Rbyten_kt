@@ -16,6 +16,7 @@ interface RbytenRepository {
     suspend fun insertTask(task: Task)
     suspend fun deleteTask(id: Int, blueprintId: Int)
     suspend fun deleteAllTasks(blueprintId: Int)
+    suspend fun deleteChildrenOfTask(parentId: Int, blueprintId: Int)
     suspend fun getTaskById(id: Int, blueprintId: Int): Task?
 
     fun getAllTasks(): Flow<List<Task>>

@@ -750,7 +750,7 @@ fun IntroContentBlank(viewModel: MainScreenViewModel) {
 @Composable
 fun IntroContent(viewModel: MainScreenViewModel) {
 
-    val lastEditedBlueprintData by remember{ mutableStateOf(viewModel.lastEditedBlueprintData)}
+    val lastEditedBlueprintData by remember { mutableStateOf(viewModel.lastEditedBlueprintData) }
     //val tasksCount by remember { mutableStateOf(viewModel.lastEditedBlueprintData.tasksCount) }
 
     Column(Modifier
@@ -941,7 +941,7 @@ fun NewBlueprintMenu(onEvent: (MainScreenEvent) -> Unit) {
         shape = RoundedCornerShape(15.dp),
         modifier = Modifier.padding(horizontal = 15.dp)
     ) {
-        Column() {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1002,7 +1002,7 @@ fun NewBlueprintMenu(onEvent: (MainScreenEvent) -> Unit) {
                         onEvent(MainScreenEvent.OnDescriptionChange(bpDesc))
                     })
 
-                Column(horizontalAlignment = Alignment.CenterHorizontally,
+                /*Column(horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
                         .padding(bottom = 10.dp)
                 ) {
@@ -1047,14 +1047,14 @@ fun NewBlueprintMenu(onEvent: (MainScreenEvent) -> Unit) {
                         }
                     }
 
-                    OutlinedButton(onClick = { /*TODO*/ }) {
+                    OutlinedButton(onClick = { *//*TODO*//* }) {
                         Icon(Icons.Filled.Add,
                             modifier = Modifier.size(12.dp),
                             contentDescription = "Добавить",
                             tint = ExtendedTheme.colors.textDark)
                         Text(text = "добавить", style = MaterialTheme.typography.h4)
                     }
-                }
+                }*/
                 Button(onClick = {
                     onEvent(MainScreenEvent.OnAddBpClick)
                 },
@@ -1293,9 +1293,40 @@ fun BlueprintPreview(
                     .fillMaxSize()
                     .padding(10.dp)
             ) {
-                Text(text = "PREVIEW", modifier = Modifier
-                    .fillMaxSize(),
-                    style = MaterialTheme.typography.mediumText, textAlign = TextAlign.Center)
+                if (blueprint.description.isNullOrBlank()) {
+                    Column(verticalArrangement = Arrangement.SpaceEvenly, modifier= Modifier.padding(horizontal = 10.dp, vertical = 10.dp)) {
+                        Box(Modifier
+                            .fillMaxWidth()
+                            .drawBehind {
+                                drawLine(color = AzureTheme.TextColored.copy(alpha = 0.1f),
+                                    strokeWidth = 25f,
+                                    cap = StrokeCap.Round,
+                                    start = Offset(x = 0f, y = this.size.height / 2),
+                                    end = Offset(x = this.size.width / 1.2f, y = this.size.height / 2))
+                            })
+                        Box(Modifier
+                            .fillMaxWidth()
+                            .drawBehind {
+                                drawLine(color = AzureTheme.TextColored.copy(alpha = 0.1f),
+                                    strokeWidth = 25f,
+                                    cap = StrokeCap.Round,
+                                    start = Offset(x = 0f, y = this.size.height / 2),
+                                    end = Offset(x = this.size.width / 3, y = this.size.height / 2))
+                            })
+                        Box(Modifier
+                            .fillMaxWidth()
+                            .drawBehind {
+                                drawLine(color = AzureTheme.TextColored.copy(alpha = 0.1f),
+                                    strokeWidth = 25f,
+                                    cap = StrokeCap.Round,
+                                    start = Offset(x = 0f, y = this.size.height / 2),
+                                    end = Offset(x = this.size.width / 2.5f, y = this.size.height / 2))
+                            })
+                    }
+                } else
+                    Text(text = blueprint.description, modifier = Modifier
+                        .fillMaxSize().padding(horizontal = 8.dp, vertical = 10.dp),
+                        style = MaterialTheme.typography.smallAccentText, textAlign = TextAlign.Left, color = ExtendedTheme.colors.textColored)
             }
         }
     }
