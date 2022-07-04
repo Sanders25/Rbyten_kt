@@ -882,7 +882,7 @@ fun IntroContent(viewModel: MainScreenViewModel) {
                 shape = RoundedCornerShape(20.dp),
                 elevation = 3.dp,
                 backgroundColor = ExtendedTheme.colors.surfaceLight,
-                onClick = { viewModel.onEvent(MainScreenEvent.OnBpClick(lastEditedBlueprintData.lastEditedBlueprint)) }
+                onClick = { viewModel.onEvent(MainScreenEvent.OnBpClick(lastEditedBlueprintData.lastEditedBlueprint!!)) }
             )
             {
                 Column() {
@@ -894,7 +894,7 @@ fun IntroContent(viewModel: MainScreenViewModel) {
 
                         ) {
                         Text(
-                            text = lastEditedBlueprintData.lastEditedBlueprint.title,
+                            text = lastEditedBlueprintData.lastEditedBlueprint!!.title,
                             style = MaterialTheme.typography.cardHeader,
                             textAlign = TextAlign.Center,
                             color = ExtendedTheme.colors.textLight,

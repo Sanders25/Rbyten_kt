@@ -18,12 +18,9 @@ import com.example.rbyten.ui.theme.Intro
 import com.example.rbyten.ui.theme.MintTheme
 import com.example.rbyten.util.UiEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.*
@@ -52,7 +49,7 @@ class MainScreenViewModel @Inject constructor(
     private val TAG = "MYTAG"
 
     inner class LastEditedBlueprint() {
-        lateinit var lastEditedBlueprint: Blueprint
+        var lastEditedBlueprint: Blueprint? = null
         var tasksCount: Int? = null
         var tasksCompleted = 0
         var deadline = ""
@@ -71,13 +68,18 @@ class MainScreenViewModel @Inject constructor(
 
                 Log.d(TAG, "sorted bp's: $blueprints")
 
-                lastEditedBlueprint = blueprints.last()
+                var tasks = emptyList<Task>()
 
-                val tasksJob = async {
-                    repository.getTasksInBlueprint(lastEditedBlueprint.id!!)
+                if (blueprints.isNotEmpty()) {
+                    lastEditedBlueprint = blueprints.last()
+
+                    val tasksJob = async {
+                        repository.getTasksInBlueprint(lastEditedBlueprint?.id!!)
+                    }
+                    tasks = tasksJob.await()
                 }
 
-                val tasks = tasksJob.await()
+
 
                 tasksCount = tasks.size
 

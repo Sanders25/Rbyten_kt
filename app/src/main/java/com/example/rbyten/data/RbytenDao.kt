@@ -49,7 +49,4 @@ interface RbytenDao {
     @Query("SELECT * FROM task WHERE blueprintId = :id")
     suspend fun getTasksInBlueprint(id: Int): List<Task>
 
-//    suspend fun getChildTasksInTask(taskId: Int): List<Task>
-    // endregion
-
 }
