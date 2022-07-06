@@ -22,9 +22,11 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.geometry.Offset
@@ -140,6 +142,7 @@ fun CustomFloatingActionButton(state: Boolean, onClick: () -> Unit, modifier: Mo
 
 @Composable
 fun CustomBottomAppBar(
+    selected: Int,
     onClickHome: () -> Unit,
     onClickSettings: () -> Unit,
     modifier: Modifier = Modifier,
@@ -152,34 +155,14 @@ fun CustomBottomAppBar(
     ) {
         Box(
             modifier = Modifier
-                .fillMaxHeight()
                 .weight(1f),
             contentAlignment = Alignment.TopCenter
         )
         {
-            IconButton(
-                onClick = onClickHome
-            ) {
-                Box(
-                    modifier = Modifier
-                        .height(35.dp),
-                ) {
-                    Icon(
-                        Icons.Filled.Home,
-                        contentDescription = "Домой",
-                        modifier = Modifier
-                            .size(25.dp)
-                            .align(Alignment.TopCenter),
-                        tint = ExtendedTheme.colors.textDark
-                    )
-                    Text(
-                        text = "Главная",
-                        style = MaterialTheme.typography.button,
-                        color = ExtendedTheme.colors.textDark,
-                        modifier = Modifier.align(Alignment.BottomCenter)
-                    )
-                }
-            }
+            CustomBottomAppBarItem(title = "Главная",
+                icon = Icons.Filled.Home,
+                isSelected = selected == 0,
+                onClick = onClickHome)
         }
         Spacer(modifier = Modifier.weight(0.5f))
         Box(
@@ -188,29 +171,50 @@ fun CustomBottomAppBar(
             contentAlignment = Alignment.TopCenter
         )
         {
-            IconButton(
-                onClick = onClickSettings
-            ) {
-                Box(
-                    modifier = Modifier
-                        .height(35.dp)
-                ) {
-                    Icon(
-                        Icons.Filled.Settings,
-                        contentDescription = "Настройки",
-                        modifier = Modifier
-                            .size(25.dp)
-                            .align(Alignment.TopCenter),
-                        tint = ExtendedTheme.colors.textDark
-                    )
-                    Text(
-                        text = "Настройки",
-                        style = MaterialTheme.typography.button,
-                        color = ExtendedTheme.colors.textDark,
-                        modifier = Modifier.align(Alignment.BottomCenter)
-                    )
-                }
-            }
+            CustomBottomAppBarItem(title = "Настройки",
+                icon = Icons.Filled.Settings,
+                isSelected = selected == 1,
+                onClick = onClickSettings)
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun CustomBottomAppBarItem(
+    title: String,
+    icon: ImageVector,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        shape = RoundedCornerShape(10.dp),
+        color = if (isSelected) ExtendedTheme.colors.accent else ExtendedTheme.colors.surfaceLight,
+        modifier = modifier
+            .height(40.dp)
+            .width(65.dp),
+        onClick = onClick
+    ) {
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(vertical = 2.dp)
+        ) {
+            Icon(
+                icon,
+                contentDescription = title,
+                modifier = modifier
+                    .size(25.dp)
+                    .align(Alignment.TopCenter),
+                tint = if (isSelected) ExtendedTheme.colors.textLight else ExtendedTheme.colors.textDark
+            )
+            Text(
+                text = title,
+                style = MaterialTheme.typography.button,
+                color = if (isSelected) ExtendedTheme.colors.textLight else ExtendedTheme.colors.textDark,
+                modifier = modifier.align(Alignment.BottomCenter)
+            )
         }
     }
 }
@@ -290,7 +294,7 @@ fun CustomTextField(
                 cursorColor = ExtendedTheme.colors.textColored,
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent,
-                ),
+            ),
             trailingIcon = {
                 IconButton(onClick = onButtonClick) {
                     Icon(

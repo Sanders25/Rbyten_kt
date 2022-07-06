@@ -155,6 +155,7 @@ fun MainScreen(
 
         bottomBar = {
             CustomBottomAppBar(
+                selected = 0,
                 onClickHome = {},
                 onClickSettings = {
                     viewModel.onEvent(MainScreenEvent.OnNavigationClick)
@@ -270,8 +271,10 @@ fun MainScreen(
                 when (introCardState) {
                     IntroCardState.Sliding -> {
                         if (lazyListState.firstVisibleItemScrollOffset in 1 until height + 20)
-                            coroutineScope.launch {
-                                lazyListState.animateScrollToItem(1)
+                            LaunchedEffect(key1 = true) {
+                                coroutineScope.launch {
+                                    lazyListState.animateScrollToItem(1)
+                                }
                             }
                         IntroCard(height,
                             introCardState,
@@ -1302,7 +1305,8 @@ fun BlueprintPreview(
                                     strokeWidth = 25f,
                                     cap = StrokeCap.Round,
                                     start = Offset(x = 0f, y = this.size.height / 2),
-                                    end = Offset(x = this.size.width / 1.2f, y = this.size.height / 2))
+                                    end = Offset(x = this.size.width / 1.2f,
+                                        y = this.size.height / 2))
                             })
                         Box(Modifier
                             .fillMaxWidth()
@@ -1320,12 +1324,14 @@ fun BlueprintPreview(
                                     strokeWidth = 25f,
                                     cap = StrokeCap.Round,
                                     start = Offset(x = 0f, y = this.size.height / 2),
-                                    end = Offset(x = this.size.width / 2.5f, y = this.size.height / 2))
+                                    end = Offset(x = this.size.width / 2.5f,
+                                        y = this.size.height / 2))
                             })
                     }
                 } else
                     Text(text = blueprint.description, modifier = Modifier
-                        .fillMaxSize().padding(horizontal = 8.dp, vertical = 10.dp),
+                        .fillMaxSize()
+                        .padding(horizontal = 8.dp, vertical = 10.dp),
                         style = MaterialTheme.typography.smallAccentText, textAlign = TextAlign.Left, color = ExtendedTheme.colors.textColored)
             }
         }

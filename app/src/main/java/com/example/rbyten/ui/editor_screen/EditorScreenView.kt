@@ -118,7 +118,9 @@ fun EditorScreen(
         isFloatingActionButtonDocked = true,
 
         bottomBar = {
-            CustomBottomAppBar(onClickHome = onPopBackStack,
+            CustomBottomAppBar(
+                selected = 2,
+                onClickHome = onPopBackStack,
                 onClickSettings = {},
                 modifier = Modifier.zIndex(3f)
             )

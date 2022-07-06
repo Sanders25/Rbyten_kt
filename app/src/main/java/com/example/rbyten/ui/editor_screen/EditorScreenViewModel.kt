@@ -210,6 +210,8 @@ class EditorScreenViewModel @Inject constructor(
                     writeToDatabase(newTask)
                 }
             }
+            EditorScreenEvent.OnSaveBp -> {
+            }
         }
     }
 

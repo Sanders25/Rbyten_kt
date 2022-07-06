@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.rbyten.data.RbytenRepository
+import com.example.rbyten.ui.components.CustomBottomAppBar
 import com.example.rbyten.ui.editor_screen.EditorScreenViewModel
 import com.example.rbyten.ui.main_screen.MainScreenEvent
 import com.example.rbyten.util.UiEvent
@@ -41,15 +42,19 @@ fun SettingsScreen(
     Scaffold(
         scaffoldState = scaffoldState,
         bottomBar = {
-            BottomAppBar(
+            CustomBottomAppBar(selected = 1,
+                onClickHome = { viewModel.onEvent(SettingsScreenEvent.OnNavigationClick) },
+                onClickSettings = {})
+        },
+            /*BottomAppBar(
                 backgroundColor = MaterialTheme.colors.surface,
                 elevation = 10.dp,
                 modifier = Modifier
-                    /*.graphicsLayer {
+                    *//*.graphicsLayer {
                         //shadowElevation = 8.dp.toPx()
                         //shape = CutCornerShape(50)
                         clip = true
-                    }*/
+                    }*//*
                     //.background(color = Color.Transparent)
                     .height(50.dp)
             ) {
@@ -120,8 +125,7 @@ fun SettingsScreen(
                         }
                     }
                 }
-            }
-        },
+            }*/
         content = {
             Column(modifier = Modifier.padding(it)) {
                 Text(text = "Экран настроек")
